@@ -1,0 +1,30 @@
+fdisk
+load --os ../progs/Lab23/os_startup.xsm
+load --library ../expl/library.lib
+load --idle ../progs/Lab23/idle.xsm
+load --init ../progs/Lab23/shell.xsm
+load --exec ../progs/Lab23/fork.xsm
+load --exec ../progs/Lab23/getpid.xsm
+load --exec ../progs/Lab23/odd.xsm
+load --exec ../progs/Lab23/even.xsm
+load --exec ../progs/Lab23/linked.xsm
+load --exec ../progs/Lab23/assgn1.xsm
+load --exec ../progs/Lab23/assgn2.xsm
+load --exhandler ../progs/Lab23/exhandler.xsm
+load --module 0 ../progs/Lab23/resource_manager_module0.xsm
+load --module 1 ../progs/Lab23/process_manager_module1.xsm
+load --module 2 ../progs/Lab23/memory_manager_module2.xsm
+load --module 4 ../progs/Lab23/device_manager_module4.xsm
+load --module 5 ../progs/Lab23/scheduler_module5.xsm
+load --module 7 ../progs/Lab23/boot_module.xsm
+load --int=timer ../progs/Lab23/timer_interrupt.xsm
+load --int=disk ../progs/Lab23/disk_interrupt_handler.xsm
+load --int=console ../progs/Lab23/console_interrupt_handler.xsm
+load --int=4 ../progs/Lab23/int4_file_system.xsm
+load --int=6 ../progs/Lab23/read_interrupt_int6.xsm
+load --int=7 ../progs/Lab23/write_interrupt_int7.xsm
+load --int=8 ../progs/Lab23/fork_int8.xsm
+load --int=9 ../progs/Lab23/exec_interrupt9.xsm
+load --int=10 ../progs/Lab23/int10_module.xsm
+load --int=11 ../progs/Lab23/interrupt11.xsm
+load --int=15 ../progs/Lab23/shutdown_interrupt15.xsm

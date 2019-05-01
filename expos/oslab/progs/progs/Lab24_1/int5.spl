@@ -1,0 +1,114 @@
+alias userSP R15;
+alias pEntryAd R14;
+alias systemNum R13;
+alias counter R12;
+alias retAd R11;
+
+userSP = SP;
+pEntryAd = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16];
+//system call number is at userSP - 5
+systemNum = [[PTBR + (userSP - 5)/512]*512 + (userSP - 5)%512];
+retAd = [[PTBR + (userSP - 1)/512]*512 + (userSP - 1)%512];
+
+//open file system call
+if(systemNum == 2) then
+    alias fileName R9;
+    //get fileName
+    fileName = [[PTBR + (userSP - 4)/512]*512 + (userSP - 4)%512];
+    //change mode flag
+    [pEntryAd + 9] = systemNum;
+
+    //switch to kernel stack
+    SP = [pEntryAd + 11]*512 - 1;
+
+    //find a free per process resource table entry 
+    alias resourceEntry R10;
+    resourceEntry = [pEntryAd + 11]*512 + RESOURCE_TABLE_OFFSET;
+    counter = 0;
+    while(counter < 8){
+        if([resourceEntry + 2*counter] == -1) then
+            break;
+        endif;
+        counter = counter + 1;
+    }
+    if(counter == 8) then
+        [retAd] = -3;
+        SP = userSP;
+        [pEntryAd + 9] = 0;
+        ireturn;
+    endif;
+
+    //call open function from file manager module to get open file table entry
+    multipush(R15, R14, R13, R12, R11, R10);
+        R1 = 3;
+        R2 = fileName;
+        call MOD_3;
+        multipop(R15, R14, R13, R12, R11, R10);
+        if(R0 == -1 || R0 == -2) then
+            [retAd] = R0;
+            SP = userSP;
+            [pEntryAd + 9] = 0;
+            ireturn;
+        endif;
+
+    //counter is resource table entry: set resourceEntry
+    [resourceEntry + 2*counter] = FILE;
+    [resourceEntry + 2*counter + 1] = R0;
+
+    //return to user mode
+    SP = userSP;
+    [pEntryAd + 9] = 0;
+    [retAd] = counter;
+
+    ireturn;
+endif;
+
+if(systemNum == 3) then
+    //change mode flag
+    [pEntryAd + 9] = systemNum;
+
+    //switch to kernel stack
+    SP = [pEntryAd + 11]*512 - 1;
+
+    //get the file descriptor
+    alias fileDesc R9;
+    fileDesc = [[PTBR + (userSP - 4)/512]*512 + (userSP - 4)%512];
+
+    //if file descriptor is invalide return -1
+    if(fileDesc > 7 || fileDesc < 0) then
+        [retAd] = -1;
+        SP = userSP;
+        [pEntryAd + 9] = 0;
+        ireturn;
+    endif;
+
+    //get the perprocess resource table address
+    alias resourceEntry R10;
+    resourceEntry = [pEntryAd + 11]*512 + RESOURCE_TABLE_OFFSET;
+
+    //if resource identifier field of per process table is invalid of not a FILE return -1
+    if([resourceEntry + 2*fileDesc] != FILE) then
+        [retAd] = -1;
+        SP = userSP;
+        [pEntryAd + 9] = 0;
+        ireturn;
+    endif;
+
+    //get open file entry and call close function
+    // alias openEntry R8;
+    multipush(R15, R14, R13, R12, R11, R10, R9);
+    R1 = 4;
+    R2 = [resourceEntry + 2*fileDesc + 1];
+    call MOD_3;
+    multipop(R15, R14, R13, R12, R11, R10, R9);
+
+    //invalidate the per process resource table entry by storing  -1
+    [resourceEntry + 2*fileDesc] = -1;
+    [resourceEntry + 2*fileDesc + 1] = -1;
+
+    [retVal] = 0;
+    SP = userSP;
+    [pEntryAd = 9] = 0;
+    ireturn;
+
+endif;

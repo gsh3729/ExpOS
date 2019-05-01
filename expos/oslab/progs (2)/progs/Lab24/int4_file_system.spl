@@ -1,0 +1,229 @@
+//This is the interrupt to implement the wait, signal , getpid and getppid system calls
+//R14 , R15 , R5
+alias systemNum R14;
+alias userSP R15;
+alias counter R11;
+alias retAddr R5;
+alias pEntryAd R6;
+//Entry Address of process in process table
+pEntryAd = PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16);
+
+//userSP-5 is the position that stores the system call number
+userSP = SP;
+systemNum = [([PTBR + 2 * ((userSP - 5) / 512) ] * 512 )  + ((userSP - 5) % 512)];
+
+//this is to switch to the kernel stack
+[pEntryAd + 13] = SP;
+SP = [pEntryAd + 11] * 512 - 1;
+//retAddr
+retAddr = ([PTBR + 2 * ((userSP - 1) / 512) ] * 512 )  + ((userSP - 1) % 512);
+
+//CREATE SYSTEM CALL
+if(systemNum == 1) then
+    //change the mode flag of the process
+    [pEntryAd + 9] = systemNum;
+
+    //userSP - 4 is the first argument of the process
+    alias file_name	R13;
+    file_name = [([PTBR + 2 * ((userSP - 4) / 512) ] * 512 )  + ((userSP - 4) % 512)];
+
+    //userSP - 3 is the second argument of the system call
+    alias permission R12;
+    permission = [([PTBR + 2*((userSP - 3) / 512)] * 512) + ((userSP - 3) % 512)];
+
+    //Check if file is already in inode_table: return 0
+    counter = 0;
+  	while(counter < MAX_FILE_NUM) do
+  		if([INODE_TABLE + (counter * 16) + 1] == file_name) then
+  			[retAddr] = 0;
+  			SP = userSP;
+  			[pEntryAd + 9] = 0;
+  			ireturn;
+  		endif;
+		counter = counter + 1;
+  	endwhile;  
+
+  	//Find Free entry if inode_table
+  	counter = 0;
+  	alias index R10;
+  	index = -1;
+  	while(counter < MAX_FILE_NUM) do
+  		if([INODE_TABLE + (counter * 16) + 1] == -1) then
+  			index = counter;
+  			break;
+  		endif;
+		counter = counter + 1;
+  	endwhile;
+
+  	//if there is no free entry in inode_table
+  	if(index == -1) then
+  		[retAddr] = index;
+  		SP = userSP;
+  		[pEntryAd + 9] = 0;
+		ireturn;
+  	endif;
+
+  	alias entryAddr R9;
+  	entryAddr = INODE_TABLE + (index * 16);
+  	[entryAddr] = DATA;
+  	[entryAddr + 1] = file_name;
+  	[entryAddr + 2] = 0;
+
+  	counter = 8;
+  	while(counter <= 11) do
+  		[entryAddr + counter] = -1; 
+		counter = counter + 1;
+  	endwhile;
+
+  	//set userId
+  	[entryAddr + 3] = [pEntryAd + 3];
+  	//set permission
+  	[entryAddr + 4] = permission;
+
+  	//Set entries in ROOT FILE
+  	//Entry Address of file in root_file
+  	alias rootEntAd R8;
+  	rootEntAd = ROOT_FILE + (index * 8);
+  	//file_name
+  	[rootEntAd] = file_name;
+  	//file_size
+  	[rootEntAd + 1] = 0;
+  	//file_type
+  	[rootEntAd + 2] = DATA;
+  	//user_name
+  	[rootEntAd + 3] = [USER_TABLE + ([pEntryAd + 3]*2)];
+
+  	[pEntryAd + 9] = 0;
+  	[retAddr] = 0;
+  	SP = userSP;
+	//print [entryAddr + 3];
+  	ireturn;
+endif;
+
+
+//DELETE SYSTEM CALL
+if(systemNum== 4) then 
+    //change the mode flag of the process
+    [pEntryAd + 9] = systemNum;
+
+    //userSP - 4 is the first argument of the process
+    alias file_name	R13;
+    file_name = [([PTBR + 2 * ((userSP - 4) / 512) ] * 512 )  + ((userSP - 4) % 512)];
+
+    alias index R10;
+    counter = 0;
+    while(counter < MAX_FILE_NUM) do
+    	if([INODE_TABLE + (counter * 16) + 1] == file_name) then
+  			index = counter;
+  			break;
+  		endif;
+		counter = counter + 1;
+    endwhile;
+
+    //if file is not present
+    if(index == -1) then
+    	[retAddr] = 0;
+    	SP = userSP;
+    	[pEntryAd + 9] = 0;
+    	ireturn;
+    endif;
+
+    //entry address of file in inode table
+  	alias iEntryAddr R9;
+  	iEntryAddr = INODE_TABLE + (index * 16);
+  	[retAddr] = -1;
+    //if file is not a data file return -1
+    if([iEntryAddr] != DATA) then
+    	SP = userSP;
+    	[pEntryAd + 9] = 0;
+    	ireturn;
+    endif;
+
+    //if exlusive permission is set
+    if([iEntryAddr + 4] == 0) then
+    	if(([pEntryAd + 3] != 1) && ([iEntryAddr + 3] != [pEntryAd + 3])) then
+    		SP = userSP;
+    		[pEntryAd + 9] = 0;
+    		ireturn;
+    	endif;
+    endif;
+    //Acquire Lock on file by calling acquire_node
+	multipush( R5, R6, R7, R8, R9, R10, R13, R15);
+	R1 = 4;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R3 = index;
+	call MOD_0;
+	if(R0 == -1) then
+		SP = userSP;
+		[pEntryAd + 9] = 0;
+		ireturn;
+	endif;
+	multipop( R5, R6, R7, R8, R9, R10, R13, R15);
+
+    //Check FileStatusTable
+    //if there are open instances of file it can't be deleted
+    if([FILE_STATUS_TABLE + 1] != -1) then
+    	[retAddr] = -2;
+    	SP = userSP;
+    	[pEntryAd + 9] = 0;
+ 		multipush( R5, R6, R7, R8, R10, R13, R15);
+		R1 = 5;
+		R3 = index;
+		R2 = [SYSTEM_STATUS_TABLE + 1];
+		call MOD_0;
+		multipop( R5, R6, R7, R8, R10, R13, R15);
+    	ireturn;
+    endif;
+
+    counter = 8;
+    alias bufferEntry R8;
+    while(counter <= 11) do
+		//if disk block is  allocated
+		if([iEntryAddr + counter] != -1) then
+			//if disk block is loaded in buffer and dirty bit is set, reset dirty bit
+			bufferEntry = BUFFER_TABLE + (4*([iEntryAddr + counter]%MAX_BUFFER));
+			if(([bufferEntry] == [iEntryAddr + counter]) && ([bufferEntry + 1] == 1)) then
+				[bufferEntry + 1] = 0;
+			endif;
+			//call release block
+			multipush( R5, R6, R7, R8, R9, R10, R11, R13, R15);
+			R1 = 2;
+			R2 = [iEntryAddr + counter];
+			R3 = [SYSTEM_STATUS_TABLE + 1];
+			call MOD_0;
+			multipop( R5, R6, R7, R8, R9, R10, R11, R13, R15);
+		endif;
+		counter = counter + 1;
+    endwhile;
+
+	//invalidate entry in inode_table
+	counter = 0;
+	while(counter < 16) do
+		[iEntryAddr + counter] = -1;
+		counter = counter + 1;
+	endwhile;
+
+	//invalidate entry in root table
+	alias rootEntAd R7;
+	rootEntAd = ROOT_FILE + (index * 8);
+
+	counter = 0;
+	while(counter < 5) do
+		[rootEntAd + counter] = -1;
+		counter = counter + 1;
+	endwhile;
+
+	//release_inode;
+	multipush( R5, R6, R7, R8, R10, R13, R15);
+	R1 = 5;
+	R3 = index;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
+	call MOD_0;
+	multipop( R5, R6, R7, R8, R10, R13, R15);
+
+	SP = userSP;
+	[pEntryAd + 9] = 0;
+	[retAddr] = 0;
+	ireturn;
+
+endif;

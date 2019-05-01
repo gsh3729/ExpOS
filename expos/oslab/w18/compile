@@ -1,0 +1,14 @@
+./spl /home/111601005/lab/expos/oslab/w18/console_interrupt_handler.spl
+./spl /home/111601005/lab/expos/oslab/w18/device_manager_module4.spl
+./spl /home/111601005/lab/expos/oslab/w18/disk_interrupt_handler.spl
+./spl /home/111601005/lab/expos/oslab/w18/int6.spl
+./spl /home/111601005/lab/expos/oslab/w18/int9.spl
+./spl /home/111601005/lab/expos/oslab/w18/int10_module.spl
+./spl /home/111601005/lab/expos/oslab/w18/m5.spl
+./spl /home/111601005/lab/expos/oslab/w18/module1.spl
+./spl /home/111601005/lab/expos/oslab/w18/module2.spl
+./spl /home/111601005/lab/expos/oslab/w18/module7.spl
+./spl /home/111601005/lab/expos/oslab/w18/resource_manager_module0.spl
+./spl /home/111601005/lab/expos/oslab/w18/timer_interrupt.spl
+./spl /home/111601005/lab/expos/oslab/w18/w18_os.spl
+./spl /home/111601005/lab/expos/oslab/w18/write_interrupt_int7.spl

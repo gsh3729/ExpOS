@@ -1,0 +1,4 @@
+//================INT 10 module=====================
+print "exception";
+print EC;
+print EPN;

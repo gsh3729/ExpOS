@@ -1,0 +1,64 @@
+alias functionNumber R1;
+alias currentPID R2;
+
+//acquire disk(pid)/////////////////////////////////////////////////////////////
+if(functionNumber == 3) then
+	//while disk is full
+	while([DISK_STATUS_TABLE] == 1) do
+		// this process will be blocked
+		[(PROCESS_TABLE + (16 * currentPID)) + 4] = WAIT_DISK;
+		multipush(R1, R2);
+		call MOD_5;
+		multipop(R1, R2);
+	endwhile;
+
+	[DISK_STATUS_TABLE] = 1;
+	[DISK_STATUS_TABLE + 4] = currentPID;
+///////////////////////////////////////////////////////////////////////////
+
+
+//acquire terminal(pid)//////////////////////////////////////////////////////////
+else if(functionNumber == 8) then
+	//while terminal is busy
+	while([TERMINAL_STATUS_TABLE] == 1) do
+		//this process will be blocked
+		[(PROCESS_TABLE + (16 * currentPID)) + 4] = WAIT_TERMINAL;
+		multipush(R1, R2);
+		call MOD_5;
+		multipop(R1, R2);
+	endwhile;
+
+	[TERMINAL_STATUS_TABLE] = 1;
+	[TERMINAL_STATUS_TABLE + 1] = currentPID;
+///////////////////////////////////////////////////////////////////////////
+
+//release terminal(pid)/////////////////////////////////////////////////////////
+else if(functionNumber == 9) then
+	alias retVal R0;
+	//checking if calling process is the process which acquired the terminal
+	if(currentPID != [TERMINAL_STATUS_TABLE + 1]) then
+		retVal = -1;
+		return;
+	endif;
+
+	//releasing terminal
+	[TERMINAL_STATUS_TABLE] = 0;
+
+	alias i R1;
+	i = 1;
+
+	while (i < MAX_PROC_NUM) do
+		if([PROCESS_TABLE + (i*16) + 4] == WAIT_TERMINAL) then
+			[PROCESS_TABLE + (i*16) + 4] = READY;
+		endif;
+		i = i+1;
+	endwhile;
+
+	retVal = 0;
+//////////////////////////////////////////////////////////////////////////////
+
+endif;
+endif;
+endif;
+
+return;

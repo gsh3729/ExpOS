@@ -1,0 +1,83 @@
+alias functionNum R1;
+alias currentPID R2;
+
+//function for Store Disk
+if(functionNum == 1) then
+    alias memoryPage R3;
+    alias diskBlock R4;
+    //calling AcquireDisk (function 3) in the resource manager module (module 0)
+    multipush(R1, R2, R3, R4);
+    R1 = 3;
+    call MOD_0;
+    multipop(R1, R2, R3, R4);
+
+    //setting the entries of the disk status table (status and PID is already set by AcquireDisk)
+    [DISK_STATUS_TABLE + 1] = 1;            // load / store
+    [DISK_STATUS_TABLE + 2] = memoryPage;   // page number
+    [DISK_STATUS_TABLE + 3] = diskBlock;    // disk block
+
+    //issuing load instruction
+    store(memoryPage, diskBlock);
+
+    //setting the state of the current process as WAIT_DISK and calling the scheduler
+    [PROCESS_TABLE + 16 * currentPID + 4] = WAIT_DISK;
+    call MOD_5;
+    return;
+
+endif;
+
+
+if (functionNum == 3)
+then
+	multipush(R1, R2, R3);
+	R1=8;
+	R2=[SYSTEM_STATUS_TABLE + 1];
+	call MOD_0;
+	multipop(R1, R2, R3);
+	print R3;
+	multipush(R1, R2, R3);
+	R1=9;
+	R2=[SYSTEM_STATUS_TABLE + 1];
+	call MOD_0;
+	multipop(R1, R2, R3);
+	return;
+endif;
+if (functionNum == 4)
+then
+	multipush(R1, R2, R3);
+	R1=8;
+	R2=[SYSTEM_STATUS_TABLE + 1];
+	call MOD_0;
+	multipop(R1, R2, R3);
+	read;
+	[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 4] = WAIT_TERMINAL;
+	//[PROCESS_TABLE + ( currentPID * 16) + 4] = WAIT_TERMINAL;
+	multipush(R1, R2, R3);
+	call MOD_5;
+	multipop(R1, R2, R3);
+	R4 = [ [PROCESS_TABLE + ( currentPID * 16) + 14] + 2 * (R3 / 512)] * 512 + (R3 % 512);
+	[R4] = [PROCESS_TABLE + ( currentPID * 16) + 8];
+	return;
+endif;
+
+//disk_load
+if(functionNum==2) then 
+   multipush(R0,R1,R2,R3,R4,R5,R9);
+   R1=3;
+   R2=currentPID;
+   call MOD_0;
+   multipop(R0,R1,R2,R3,R4,R5,R9);
+   [DISK_STATUS_TABLE]=1;
+   [DISK_STATUS_TABLE+1]=0;
+   [DISK_STATUS_TABLE+2]=R3;
+   [DISK_STATUS_TABLE+3]=R4;
+   [DISK_STATUS_TABLE+4]=currentPID;
+   load(R3,R4);
+   [PROCESS_TABLE + currentPID*16 +4]=WAIT_DISK;
+   multipush(R0,R1,R2,R3,R4,R5,R9);
+   call MOD_5;
+   multipop(R0,R1,R2,R3,R4,R5,R9);
+   return;   
+endif;
+
+return;

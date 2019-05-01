@@ -1,0 +1,20 @@
+fdisk
+load --os /home/sriharsha/lab/expos/oslab/w19/w19_os.xsm
+load --library /home/sriharsha/lab/expos/myexpos/expl/library.lib
+load --idle /home/sriharsha/lab/expos/oslab/w19/idle.xsm
+load --init /home/sriharsha/lab/expos/oslab/w19/exec.xsm
+load --exec /home/sriharsha/lab/expos/oslab/w19/ass.xsm
+load --module 0 /home/sriharsha/lab/expos/oslab/w19/resource_manager_module0.xsm
+load --module 1 /home/sriharsha/lab/expos/oslab/w19/module1.xsm
+load --module 2 /home/sriharsha/lab/expos/oslab/w19/module2.xsm
+load --module 4 /home/sriharsha/lab/expos/oslab/w19/device_manager_module4.xsm
+load --module 5 /home/sriharsha/lab/expos/oslab/w19/m5.xsm
+load --module 7 /home/sriharsha/lab/expos/oslab/w19/module7.xsm
+load --exhandler /home/sriharsha/lab/expos/oslab/w19/exception_handler.xsm
+load --int=timer /home/sriharsha/lab/expos/oslab/w19/timer_interrupt.xsm
+load --int=disk /home/sriharsha/lab/expos/oslab/w19/disk_interrupt_handler.xsm
+load --int=console /home/sriharsha/lab/expos/oslab/w19/console_interrupt_handler.xsm
+load --int=6 /home/sriharsha/lab/expos/oslab/w19/int6.xsm
+load --int=7 /home/sriharsha/lab/expos/oslab/w19/write_interrupt_int7.xsm
+load --int=9 /home/sriharsha/lab/expos/oslab/w19/int9.xsm
+load --int=10 /home/sriharsha/lab/expos/oslab/w19/int10_module.xsm

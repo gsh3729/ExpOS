@@ -1,0 +1,183 @@
+//fork_system call
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 8;
+alias retval R1;
+retval = [PTBR + 2*((SP-1)/512)]*512+((SP-1)%512);
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP=[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11]*512 -1;
+//print("f_en");
+//call get_pcb 
+multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+R1=1;
+call MOD_1;
+multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+//If no free entry is found, return -1.
+if(R0==-1) then
+ SP=[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13];
+ [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9]=0;
+ [retval]=-1;
+ ireturn;
+endif;
+
+//UA-user area
+alias childUA R3;
+alias parentUA R4;
+
+alias childPID R5;
+alias childPTBR R6;
+alias parentPID R7;
+alias parentPTBR R8;
+
+childPID=R0;
+childPTBR = PAGE_TABLE_BASE + childPID*20;
+
+parentPID=[SYSTEM_STATUS_TABLE+1];
+parentPTBR=PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1]*20;
+
+//if ([parentPTBR + 4]==-1) then
+//multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+//R1 = 1;
+//call MOD_2;
+//multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+//[parentPTBR + 4]=R0;
+//[parentPTBR + 5]="0110";
+//endif;
+
+//if ([parentPTBR + 6]==-1) then
+//multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+//R1 = 1;
+//call MOD_2;
+//multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+//[parentPTBR + 6]=R0;
+//[parentPTBR + 7]="0110";
+//endif;
+
+//2 memory pages for user stack
+multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+R1 = 1;
+call MOD_2;
+multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+[childPTBR + 16]=R0;
+[childPTBR + 17]="0110";
+
+multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+R1 = 1;
+call MOD_2;
+multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+[childPTBR + 18]=R0;
+[childPTBR + 19]="0110";
+
+// 1 meomry page for user area of child process
+multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+R1 = 1;
+call MOD_2;
+multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+[PROCESS_TABLE + childPID*16 + 11] = R0;
+
+//process table initialization of child process
+//userid
+[PROCESS_TABLE + childPID*16 + 3]=[PROCESS_TABLE + parentPID*16 + 3];
+//SWAP flag
+[PROCESS_TABLE + childPID*16 + 6]=[PROCESS_TABLE + parentPID*16 + 6]; 
+//INODE INDEX 
+[PROCESS_TABLE + childPID*16 + 7]=[PROCESS_TABLE + parentPID*16 + 7];
+//USER AREA SWAP STATUS 
+[PROCESS_TABLE + childPID*16 + 10]=[PROCESS_TABLE + parentPID*16 + 10];
+//UPTR
+[PROCESS_TABLE + childPID*16 + 13]=[PROCESS_TABLE + parentPID*16 + 13];
+
+//MODE-FALG,TICK,KPTR
+[PROCESS_TABLE + childPID*16 + 9]=0;
+[PROCESS_TABLE + childPID*16 + 0]=0;
+[PROCESS_TABLE + childPID*16 + 12]=0;
+
+//PPID
+[PROCESS_TABLE + childPID*16 + 2]=parentPID;
+[PROCESS_TABLE + childPID*16 + 4]=CREATED;
+
+//per_process table
+childUA=[PROCESS_TABLE + childPID*16 + 11]*512 + 512 -16;
+parentUA=[PROCESS_TABLE + parentPID*16 + 11]*512 + 512 -16;
+
+//goto last of UA
+//childUA = childUA + 512-16;
+//parentUA = parentUA + 512-16;
+
+alias counter R2;
+alias temp R11;
+alias temp1 R12;
+alias temp3 R13;
+counter = 0;
+//temp=SEMAPHORE_TABLE +1;
+while (counter <=7) do
+	temp=childUA + 2*counter;
+	temp1=parentUA + 2*counter;
+	[temp]=[temp1];
+	[temp + 1]=[temp1 +1];
+	temp3=SEMAPHORE_TABLE+[temp+1]*4+1;
+	if([temp]==1)then
+	[temp3]=[temp3]+1;
+	//[temp+[childUA+1]*4]=[temp+[childUA+1]*4]+1;
+	endif;
+	counter = counter + 1;
+endwhile;
+
+//per_process disk map table
+counter = 0;
+temp=DISK_MAP_TABLE;
+while (counter<10) do
+	//[DISK_MAP_TABLE +childPID*10+counter]=[DISK_MAP_TABLE +parentPID*10+counter];
+	[temp+childPID*10+counter]=[temp+parentPID*10+counter];
+	counter=counter+1;
+endwhile;
+
+//initialze pagetable for childprocess
+counter=0;
+while (counter<16) do
+temp=childPTBR+counter;
+temp1=parentPTBR+counter;
+[temp]=[temp1];
+[temp+1]=[temp1+1];
+[MEMORY_FREE_LIST+[temp]]=[MEMORY_FREE_LIST +[temp]] +1;
+counter=counter+2;
+endwhile;
+
+//copy from userstack of parent to user stack of child
+alias ChildUserSP R9;
+alias ParentUserSP R10;
+ChildUserSP=[PAGE_TABLE_BASE + ( childPID * 20) + 16]*512;
+ParentUserSP=[PAGE_TABLE_BASE + ( parentPID * 20) + 16]*512;
+counter=0;
+while (counter<(512)) do
+	[ChildUserSP + counter] = [ParentUserSP + counter];
+	counter = counter +1;
+endwhile;
+
+ChildUserSP=[PAGE_TABLE_BASE + ( childPID * 20) + 18]*512;
+ParentUserSP=[PAGE_TABLE_BASE + ( parentPID * 20) + 18]*512;
+counter=0;
+while (counter<(512)) do
+	[ChildUserSP + counter] = [ParentUserSP + counter];
+	counter = counter +1;
+endwhile;
+
+
+//Store BP on top of kernel stack of child process
+[[PROCESS_TABLE + (childPID * 16) + 11]*512] = BP;
+
+SP=[PROCESS_TABLE + parentPID*16 + 13];
+[retval]=childPID;
+//print(retval);
+retval = [childPTBR + 2*((SP-1)/512)]*512+((SP-1)%512);
+//print(retval);
+[retval]=0;
+//retval = [parentPTBR + 2*((SP-1)/512)]*512+((SP-1)%512);
+
+//breakpoint;
+
+[PROCESS_TABLE + ( parentPID * 16) + 9] = 0;
+//print("f_exi");
+//print(parentPID);
+//print(childPID);
+
+
+ireturn;

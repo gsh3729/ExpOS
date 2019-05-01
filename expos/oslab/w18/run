@@ -1,0 +1,19 @@
+fdisk
+load --os /home/111601005/lab/expos/oslab/w18/w18_os.xsm
+load --library /home/111601005/lab/expos/myexpos/expl/library.lib
+load --idle /home/111601005/lab/expos/oslab/w18/idle.xsm
+load --init /home/111601005/lab/expos/oslab/w18/exec.xsm
+load --exec /home/111601005/lab/expos/oslab/w18/odd.xsm
+load --module 0 /home/111601005/lab/expos/oslab/w18/resource_manager_module0.xsm
+load --module 1 /home/111601005/lab/expos/oslab/w18/module1.xsm
+load --module 2 /home/111601005/lab/expos/oslab/w18/module2.xsm
+load --module 4 /home/111601005/lab/expos/oslab/w18/device_manager_module4.xsm
+load --module 5 /home/111601005/lab/expos/oslab/w18/m5.xsm
+load --module 7 /home/111601005/lab/expos/oslab/w18/module7.xsm
+load --int=timer /home/111601005/lab/expos/oslab/w18/timer_interrupt.xsm
+load --int=disk /home/111601005/lab/expos/oslab/w18/disk_interrupt_handler.xsm
+load --int=console /home/111601005/lab/expos/oslab/w18/console_interrupt_handler.xsm
+load --int=6 /home/111601005/lab/expos/oslab/w18/int6.xsm
+load --int=7 /home/111601005/lab/expos/oslab/w18/write_interrupt_int7.xsm
+load --int=9 /home/111601005/lab/expos/oslab/w18/int9.xsm
+load --int=10 /home/111601005/lab/expos/oslab/w18/int10_module.xsm

@@ -1,0 +1,126 @@
+//=================== MODULE 0 ====================
+//print "resource";
+alias functionNum R1;
+alias currentPID R2;
+
+//=============== Acquire Disk ====================
+if(functionNum == 3) then
+
+	while([DISK_STATUS_TABLE] == 1) do
+		[(PROCESS_TABLE + (16 * currentPID)) + 4] = WAIT_DISK;
+		multipush(R1, R2);
+		call MOD_5;
+		multipop(R1, R2);
+	endwhile;
+
+	[DISK_STATUS_TABLE] = 1;
+	[DISK_STATUS_TABLE + 4] = currentPID;
+
+//=============== Acquire Terminal ===================
+else if(functionNum == 8) then
+
+	//print "term status";
+	//print [TERMINAL_STATUS_TABLE];
+
+	while([TERMINAL_STATUS_TABLE] == 1) do
+
+		[(PROCESS_TABLE + (16 * currentPID)) + 4] = WAIT_TERMINAL;
+
+		multipush(R1, R2);
+
+		call MOD_5;
+
+		multipop(R1, R2);
+
+	endwhile;
+	[TERMINAL_STATUS_TABLE] = 1;
+	[TERMINAL_STATUS_TABLE + 1] = currentPID;
+//====================================================
+
+//=============== Release Terminal ===================
+else if(functionNum == 9) then
+
+	alias retVal R0;
+	//print "release";
+	// checking if calling process is the process which acquired the terminal
+	if(currentPID != [TERMINAL_STATUS_TABLE + 1]) then
+		//print "release1";
+		retVal = -1;
+		return;
+	endif;
+
+	[TERMINAL_STATUS_TABLE] = 0;
+
+	alias i R1;
+	i = 1;
+	//print "release2";
+
+	while (i < MAX_PROC_NUM) do
+		if([PROCESS_TABLE + (i*16) + 4] == WAIT_TERMINAL) then
+			//print "ready";
+			//print i;
+			[PROCESS_TABLE + (i*16) + 4] = READY;
+		endif;
+		i = i+1;
+	endwhile;
+
+	retVal = 0;
+
+//====================================================
+endif;
+endif;
+endif;
+
+//acquire the semaphore
+if (functionNum == 6) then
+    alias currentPID R2;
+    alias counter R3;
+
+    counter = 0;
+    while (counter < 32) do
+        if ([SEMAPHORE_TABLE + counter * 4 + 1 ] == 0) then
+             break;
+        endif;
+        counter = counter + 1;
+    endwhile;
+
+
+    if (counter >= 32) then
+        R0 = -1;
+        return;
+    endif;
+
+    //set the process count to 1
+    [SEMAPHORE_TABLE + counter * 4 + 1] = 1;
+    [SEMAPHORE_TABLE + counter * 4] = currentPID;             //this is the locking pid
+    R0 = counter;
+
+    return;
+endif;  
+
+//release the semaphore
+if (functionNum == 7) then
+    
+    //these are from the arguments
+    alias semID R2;
+    alias currentPID R3;
+
+    if ([SEMAPHORE_TABLE + semID * 4 + 0 ] == currentPID) then
+        [SEMAPHORE_TABLE + semID * 4 + 0] = -1;      //set the locking pid to -1
+        alias counter R4;
+        counter = 0;
+        while (counter < 16) do
+            if ([PROCESS_TABLE + counter * 16 + 4] == WAIT_SEMAPHORE && [PROCESS_TABLE + counter * 16 + 5] == semID) then
+                [PROCESS_TABLE + counter * 16 + 4] = READY;
+            endif;
+            counter = counter + 1;
+        endwhile;
+    endif; 
+
+    //decrement the process count
+    [SEMAPHORE_TABLE + semID * 4 + 1] = [SEMAPHORE_TABLE + semID * 4 + 1] -1;
+
+    return;
+endif;
+
+return;

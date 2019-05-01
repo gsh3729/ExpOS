@@ -1,0 +1,20 @@
+fdisk
+load --exec /home/sriharsha/lab/expos/oslab/WEEK19/a1.xsm
+load --init /home/sriharsha/lab/expos/oslab/WEEK19/input.xsm 
+load --library /home/sriharsha/lab/expos/myexpos/expl/library.lib
+load --idle /home/sriharsha/lab/expos/oslab/WEEK19/idle.xsm 
+load --int=10 /home/sriharsha/lab/expos/oslab/WEEK19/haltprog.xsm 
+load --exhandler /home/sriharsha/lab/expos/oslab/WEEK19/Exhandler.xsm 
+load --int=7 /home/sriharsha/lab/expos/oslab/WEEK19/sample_int7.xsm 
+load --int=timer /home/sriharsha/lab/expos/oslab/WEEK19/ex19_timer.xsm
+load --int=console /home/sriharsha/lab/expos/oslab/WEEK19/console_inter.xsm
+load --int=disk /home/sriharsha/lab/expos/oslab/WEEK19/disk_inter.xsm
+load --int=6 /home/sriharsha/lab/expos/oslab/WEEK19/int_6.xsm
+load --int=9 /home/sriharsha/lab/expos/oslab/WEEK19/int_9.xsm
+load --module 1 /home/sriharsha/lab/expos/oslab/WEEK19/module_1.xsm
+load --module 2 /home/sriharsha/lab/expos/oslab/WEEK19/module_2.xsm
+load --module 7 /home/sriharsha/lab/expos/oslab/WEEK19/module_7.xsm
+load --module 5 /home/sriharsha/lab/expos/oslab/WEEK19/module_5.xsm
+load --module 4 /home/sriharsha/lab/expos/oslab/WEEK19/module_4.xsm
+load --module 0 /home/sriharsha/lab/expos/oslab/WEEK19/module_0.xsm
+load --os /home/sriharsha/lab/expos/oslab/WEEK19/ex19_os.xsm

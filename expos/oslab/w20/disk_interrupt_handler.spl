@@ -1,0 +1,22 @@
+//Save SP in UPTR
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13] = SP;
+
+//switching to kernal stack
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+backup;
+
+[DISK_STATUS_TABLE]=0;
+
+//changing the state of the process to READY, which is in WAIT_DISK state. 
+alias counter R1;
+counter = 0;
+while(counter < MAX_PROC_NUM) do
+	if([(PROCESS_TABLE + 16*counter) + 4] == WAIT_DISK) then
+		[(PROCESS_TABLE + 16*counter) + 4] = READY;
+	endif;
+	counter = counter + 1;
+endwhile;
+
+restore;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1]*16 + 13];
+ireturn;

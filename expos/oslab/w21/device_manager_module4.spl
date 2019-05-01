@@ -1,0 +1,89 @@
+alias functionNumber R1;
+alias currentPID R2;
+
+
+//disk load (pid,pageNum,blockNum)
+if(functionNumber == 2) then
+	alias pageNumber R3;
+	alias blockNumber R4;
+
+	multipush(R1, R2, R3, R4);
+	functionNumber = 3;
+	call MOD_0;  //acquire disk
+	multipop(R1, R2, R3, R4);
+
+	//load operation "0"
+	[DISK_STATUS_TABLE + 1] = 0;
+
+	//page Numberber
+	[DISK_STATUS_TABLE + 2] = pageNumber;
+
+	//block Numberber
+	[DISK_STATUS_TABLE + 3] = blockNumber;
+
+	//load the disk block to memory
+	load(pageNumber, blockNumber);
+
+	[(PROCESS_TABLE + 16*currentPID) + 4] = WAIT_DISK;
+
+	// invoke the scheduler
+	call MOD_5;
+
+//terminal write(pid,word)///////////////////////////////////////////////////////////
+else if(functionNumber == 3) then
+	alias word R3;
+	//acquire terminal(pid)////////////////////////////////////////////////
+	multipush(R1, R2, R3);
+	functionNumber = 8;
+
+	call MOD_0;
+
+	multipop(R1, R2, R3);
+	///////////////////////////////////////////////////////////////////////
+
+	print word;
+
+	//release terminal/////////////////////////////////////////////////////
+	multipush(R1, R2, R3);
+	functionNumber = 9;
+
+	call MOD_0;
+
+	multipop(R1, R2, R3);
+	////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+
+//terminal read(pid,word)/////////////////////////////////////////////////////////////
+
+else if(functionNumber == 4) then
+	alias word R3;
+	//acquire terminal(pid)///////////////////////////////////////////////////////
+	multipush(R1, R2, R3);
+
+	functionNumber = 8;
+
+	call MOD_0;
+
+	multipop(R1, R2, R3);
+	//////////////////////////////////////////////////////////////////////////////
+
+	// use read statement, for requesting to read from the terminal
+	read;
+
+	[(PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16)) + 4] = WAIT_TERMINAL;
+	
+	multipush(R1, R2, R3);
+	call MOD_5;
+	multipop(R1, R2, R3);
+
+	word =  ([PTBR + 2 * (word/512)] * 512) + (word % 512);
+
+	[word] = [(PROCESS_TABLE + (16 * [SYSTEM_STATUS_TABLE + 1]))  + 8];
+	////////////////////////////////////////////////////////////////////////////
+
+endif;
+endif;
+endif;
+
+return;

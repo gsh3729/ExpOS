@@ -1,0 +1,22 @@
+int main() {
+
+    decl
+        int temp, ret, permission;
+        str out, filename;
+    enddecl
+
+    begin
+        out = "Filename";
+        temp = exposcall("Write", -2, out);
+        temp = exposcall("Read", -1, filename);
+        ret = exposcall("Delete", filename);
+        if(ret == 0) then
+            out = "Success";
+        else
+            out = "Failed";
+        endif;
+        temp = exposcall("Write", -2, out);
+        temp = exposcall("Shutdown");
+        return 0;
+    end
+}

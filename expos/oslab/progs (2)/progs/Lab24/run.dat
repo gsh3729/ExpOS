@@ -1,0 +1,37 @@
+fdisk
+load --os ../progs/Lab24/os_startup.xsm
+load --library ../expl/library.lib
+load --idle ../progs/Lab24/idle.xsm
+load --init ../progs/Lab24/shell.xsm
+load --exec ../progs/Lab24/fork.xsm
+load --exec ../progs/Lab24/getpid.xsm
+load --exec ../progs/Lab24/odd.xsm
+load --exec ../progs/Lab24/even.xsm
+load --exec ../progs/Lab24/linked.xsm
+load --exec ../progs/Lab24/assgn1.xsm
+load --exec ../progs/Lab24/assgn2.xsm
+load --data ../progs/Lab24/sample.dat
+load --data ../progs/Lab24/numbers.dat
+load --data ../progs/Lab24/numSmall.dat
+load --exhandler ../progs/Lab24/exhandler.xsm
+load --module 0 ../progs/Lab24/resource_manager_module0.xsm
+load --module 1 ../progs/Lab24/process_manager_module1.xsm
+load --module 2 ../progs/Lab24/memory_manager_module2.xsm
+load --module 3 ../progs/Lab24/file_manager_module3.xsm
+load --module 4 ../progs/Lab24/device_manager_module4.xsm
+load --module 5 ../progs/Lab24/scheduler_module5.xsm
+load --module 7 ../progs/Lab24/boot_module.xsm
+load --int=timer ../progs/Lab24/timer_interrupt.xsm
+load --int=disk ../progs/Lab24/disk_interrupt_handler.xsm
+load --int=console ../progs/Lab24/console_interrupt_handler.xsm
+load --int=4 ../progs/Lab24/int4_file_system.xsm
+load --int=5 ../progs/Lab24/interrupt5.xsm
+load --int=6 ../progs/Lab24/read_interrupt_int6.xsm
+load --int=7 ../progs/Lab24/write_interrupt_int7.xsm
+load --int=8 ../progs/Lab24/fork_int8.xsm
+load --int=9 ../progs/Lab24/exec_interrupt9.xsm
+load --int=10 ../progs/Lab24/int10_module.xsm
+load --int=11 ../progs/Lab24/interrupt11.xsm
+load --int=13 ../progs/Lab24/interrupt13.xsm
+load --int=14 ../progs/Lab24/interrupt14.xsm
+load --int=15 ../progs/Lab24/shutdown_interrupt15.xsm

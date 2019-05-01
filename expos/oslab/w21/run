@@ -1,0 +1,26 @@
+fdisk
+load --os /home/sriharsha/lab/expos/oslab/w21/w21_os.xsm
+load --library /home/sriharsha/lab/expos/myexpos/expl/library.lib
+load --idle /home/sriharsha/lab/expos/oslab/w21/idle.xsm
+load --init /home/sriharsha/lab/expos/oslab/w21/shell.xsm
+load --exec /home/sriharsha/lab/expos/oslab/w21/even.xsm
+load --exec /home/sriharsha/lab/expos/oslab/w21/shell2.xsm
+load --exec /home/sriharsha/lab/expos/oslab/w21/odd.xsm
+load --exec /home/sriharsha/lab/expos/oslab/w21/pid.xsm
+load --module 0 /home/sriharsha/lab/expos/oslab/w21/resource_manager_module0.xsm
+load --module 1 /home/sriharsha/lab/expos/oslab/w21/module_1.xsm
+load --module 2 /home/sriharsha/lab/expos/oslab/w21/module_2.xsm
+load --module 4 /home/sriharsha/lab/expos/oslab/w21/device_manager_module4.xsm
+load --module 5 /home/sriharsha/lab/expos/oslab/w21/m5.xsm
+load --module 7 /home/sriharsha/lab/expos/oslab/w21/module7.xsm
+load --exhandler /home/sriharsha/lab/expos/oslab/w21/Exhandler.xsm
+load --int=timer /home/sriharsha/lab/expos/oslab/w21/timer_interrupt.xsm
+load --int=disk /home/sriharsha/lab/expos/oslab/w21/disk_interrupt_handler.xsm
+load --int=console /home/sriharsha/lab/expos/oslab/w21/console_interrupt_handler.xsm
+load --int=6 /home/sriharsha/lab/expos/oslab/w21/int6.xsm
+load --int=7 /home/sriharsha/lab/expos/oslab/w21/write_interrupt_int7.xsm
+load --int=8 /home/sriharsha/lab/expos/oslab/w21/int8.xsm
+load --int=9 /home/sriharsha/lab/expos/oslab/w21/int_9.xsm
+load --int=10 /home/sriharsha/lab/expos/oslab/w21/int10.xsm
+load --int=11 /home/sriharsha/lab/expos/oslab/w21/int11.xsm
+load --int=15 /home/sriharsha/lab/expos/oslab/w21/int15.xsm

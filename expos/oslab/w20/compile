@@ -1,0 +1,16 @@
+./spl /home/sriharsha/lab/expos/oslab/w20/Exhandler.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/int6.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/int8.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/int_9.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/int10.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/resource_manager_module0.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/module_1.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/module_2.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/device_manager_module4.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/m5.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/module7.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/write_interrupt_int7.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/timer_interrupt.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/disk_interrupt_handler.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/console_interrupt_handler.spl
+./spl /home/sriharsha/lab/expos/oslab/w20/w20_os.spl

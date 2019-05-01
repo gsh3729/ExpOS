@@ -1,0 +1,117 @@
+//this the resource manager module
+//function number = 3          //this is for the acquire disk module    
+                               // R1 stores the function number, R2 stores the current PID
+
+alias functionNum R1;
+alias currentPID R2;
+alias pEntryAd R15;
+pEntryAd = PROCESS_TABLE + currentPID * 16;
+
+if (functionNum == 3) then
+    while (1) do
+    if ([DISK_STATUS_TABLE] == 0) then
+        break;
+    endif;
+    [pEntryAd + 4] = WAIT_DISK;
+        multipush (R1 , R2 , R3);
+        call MOD_5;
+        multipop (R1 , R2 , R3);
+    endwhile;
+    [DISK_STATUS_TABLE + 0] = 1;          //status of the disk
+    [DISK_STATUS_TABLE + 4] = currentPID;    //pid of the disk
+    return;
+endif; 
+
+//Acquire Inode
+if(functionNum == 4) then
+    alias inodeIndex R3;
+    alias fileStatus R4;
+    fileStatus = FILE_STATUS_TABLE + (4*inodeIndex);
+    while([fileStatus] != -1) do
+        [pEntryAd + 4] = WAIT_FILE;
+        [pEntryAd + 5] = inodeIndex;
+        //call scheduler
+        multipush(R2, R3, R4, R15);
+        call MOD_5;
+        multipop(R2, R3, R4, R15);
+    endwhile;
+
+    //if inode becomes invalid return -1;
+    if([INODE_TABLE + (16 * inodeIndex) + 1] == -1) then
+        R0 = -1;
+        return;
+    endif;
+
+    [fileStatus] = currentPID;
+
+    R0 = 0;
+    return;
+
+endif;
+
+//Release Inode
+if(functionNum == 5) then
+    alias inodeIndex R3;
+    alias fileStatus R4;
+    fileStatus = FILE_STATUS_TABLE + (16*inodeIndex);
+
+    if([fileStatus] != currentPID) then
+        R0 = -1;
+        return;
+    endif;
+
+    [fileStatus] = -1;
+    [pEntryAd + 4] = READY;
+
+    alias counter R5;
+    counter = 0;
+    while(counter < MAX_PROC_NUM) do
+        if(([PROCESS_TABLE + (counter*16) + 4] == WAIT_FILE) && 
+        ([PROCESS_TABLE + (counter*16) + 5] == inodeIndex)) then
+            [PROCESS_TABLE + (counter*16) + 4] =  READY;
+        endif;
+    endwhile;
+
+    R0 = 0;
+    return;
+endif;
+
+
+//this is for the acquire terminal
+if (functionNum == 8) then
+    while (1) do
+    if ([TERMINAL_STATUS_TABLE] != 1) then
+        break;
+    endif;
+    [PROCESS_TABLE + currentPID * 16 + 4] = WAIT_TERMINAL;
+        multipush (R1 , R2 , R3);
+        call MOD_5;
+        multipop (R1 , R2 , R3);
+    endwhile;
+    [TERMINAL_STATUS_TABLE + 0] = 1;
+    [TERMINAL_STATUS_TABLE + 1] = currentPID;
+    return;
+endif;
+
+if (functionNum == 9) then
+    //breakpoint;
+    if (currentPID != [TERMINAL_STATUS_TABLE + 1]) then
+        R0 = -1;
+        return;
+    endif;
+    //print("Release");
+    [TERMINAL_STATUS_TABLE + 0] = 0;
+    alias process_number R3;
+    process_number = 1;
+    while (process_number < 16) do           //only upto the valid PID since it scheduling only three processes
+
+        if ([PROCESS_TABLE + 16 * process_number + 4] == WAIT_TERMINAL) then
+            [PROCESS_TABLE + 16 * process_number + 4] = READY;
+        endif;
+        process_number = process_number + 1;
+    endwhile;
+    
+    R0 = 0;                             //this is to return the value
+    return;
+endif;
+return;

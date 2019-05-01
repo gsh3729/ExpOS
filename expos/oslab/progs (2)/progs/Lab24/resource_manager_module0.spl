@@ -1,0 +1,229 @@
+//Resource Manager Module
+
+//function number = 1          //this is for the acquire buffer
+//function number = 2          //release buffer
+//function number = 3          //acquire disk
+//function number = 4          //acquire inode
+//function number = 5          //release inode
+//function number = 6          //acquire semaphore
+//funciton number = 7          //release semaphore  
+//function number = 8          //acquire terminal
+//function number = 9          //release terminal
+ 
+// R1 stores the function number, R2 stores the current PID
+
+alias functionNum R1;
+alias currentPID R2;
+alias pEntryAd R15;
+pEntryAd = PROCESS_TABLE + currentPID * 16;
+
+// acquire buffer
+if(functionNum == 1) then
+    alias buffer_num R2;
+    alias currentpid R3;
+    
+    // while buffer is locked
+    while([BUFFER_TABLE + buffer_num * 4 + 2] != -1) do
+        [PROCESS_TABLE + currentpid*16 + 4] = WAIT_BUFFER;
+        [PROCESS_TABLE + currentpid*16 + 5] = buffer_num;
+        
+        // call scheduler
+        multipush(R2, R3);
+        call MOD_5;
+        multipop(R2, R3);
+    endwhile;
+
+    // Lock the Buffer by setting the PID of the current process in the Locking PID field of BUFFER_TABLE
+    [BUFFER_TABLE + buffer_num*4 + 2] = currentpid;
+    return;
+endif;
+
+// release buffer
+if(functionNum == 2) then
+    alias buffer_num R2;
+    alias currentpid R3;
+    // If PID given as input is not equal to the LOCKING PID in the Buffer Status Table, return -1
+    if([BUFFER_TABLE + 4*buffer_num + 2] != currentpid) then
+        R0 = -1;
+        return;
+    endif;
+
+    // Set Locking PID field to -1
+    [BUFFER_TABLE + 4*buffer_num + 2] = -1;
+
+    alias i R4;
+    i = 0;
+    while(i < 16) do
+        if(([PROCESS_TABLE + 16*i + 4] == WAIT_BUFFER) && ([PROCESS_TABLE + 16*i + 5] == buffer_num)) then
+            [PROCESS_TABLE + 16*i + 4] = READY;
+        endif;
+        i = i+1;
+    endwhile;
+    R0 = 0;
+    return;
+endif;
+
+// acquire Disk
+if (functionNum == 3) then
+    while (1) do
+		if ([DISK_STATUS_TABLE] == 0) then
+		    break;
+		endif;
+		[pEntryAd + 4] = WAIT_DISK;
+		    multipush (R1 , R2 , R3);
+		    call MOD_5;
+		    multipop (R1 , R2 , R3);
+    endwhile;
+    [DISK_STATUS_TABLE + 0] = 1;          //status of the disk
+    [DISK_STATUS_TABLE + 4] = currentPID;    //pid of the disk
+    return;
+endif; 
+
+//Acquire Inode
+if(functionNum == 4) then
+    alias inodeIndex R3;
+    alias fileStatus R4;
+    fileStatus = FILE_STATUS_TABLE + (4*inodeIndex);
+    while([fileStatus] != -1) do
+        [pEntryAd + 4] = WAIT_FILE;
+        [pEntryAd + 5] = inodeIndex;
+        //call scheduler
+        multipush(R2, R3, R4, R15);
+        call MOD_5;
+        multipop(R2, R3, R4, R15);
+    endwhile;
+
+    //if inode becomes invalid return -1;
+    if([INODE_TABLE + (16 * inodeIndex) + 1] == -1) then
+        R0 = -1;
+        return;
+    endif;
+
+    [fileStatus] = currentPID;
+
+    R0 = 0;
+    return;
+
+endif;
+
+//Release Inode
+if(functionNum == 5) then
+    alias inodeIndex R3;
+    alias fileStatus R4;
+    fileStatus = FILE_STATUS_TABLE + (4*inodeIndex);
+
+    if([fileStatus] != currentPID) then
+        R0 = -1;
+        return;
+    endif;
+
+    [fileStatus] = -1;
+    [pEntryAd + 4] = READY;
+
+    alias counter R5;
+    counter = 0;
+    while(counter < MAX_PROC_NUM) do
+        if(([PROCESS_TABLE + (counter*16) + 4] == WAIT_FILE) && 
+        ([PROCESS_TABLE + (counter*16) + 5] == inodeIndex)) then
+            [PROCESS_TABLE + (counter*16) + 4] =  READY;
+        endif;
+        counter = counter + 1;
+    endwhile;
+
+    R0 = 0;
+    return;
+endif;
+
+//this is for the acquire terminal
+if (functionNum == 8) then
+    while (1) do
+		if ([TERMINAL_STATUS_TABLE] != 1) then
+		    break;
+		endif;
+		[PROCESS_TABLE + currentPID * 16 + 4] = WAIT_TERMINAL;
+		    multipush (R1 , R2 , R3);
+		    call MOD_5;
+		    multipop (R1 , R2 , R3);
+    endwhile;
+    [TERMINAL_STATUS_TABLE + 0] = 1;
+    [TERMINAL_STATUS_TABLE + 1] = currentPID;
+    return;
+endif;
+
+//release terminal
+if (functionNum == 9) then
+    //breakpoint;
+    if (currentPID != [TERMINAL_STATUS_TABLE + 1]) then
+        R0 = -1;
+        return;
+    endif;
+
+    [TERMINAL_STATUS_TABLE + 0] = 0;
+    alias process_number R3;
+    process_number = 1;
+    while (process_number < 16) do           
+
+        if ([PROCESS_TABLE + 16 * process_number + 4] == WAIT_TERMINAL) then
+            [PROCESS_TABLE + 16 * process_number + 4] = READY;
+        endif;
+        process_number = process_number + 1;
+    endwhile;
+    
+    R0 = 0;                             //this is to return the value
+    return;
+endif;
+
+//acquire the semaphore
+if (functionNum == 6) then
+    alias currentPID R2;
+    alias counter R3;
+
+    counter = 0;
+    while (counter < 32) do
+        if ([SEMAPHORE_TABLE + counter * 4 + 1 ] == 0) then
+             break;
+        endif;
+        counter = counter + 1;
+    endwhile;
+
+    if (counter >= 32) then
+        R0 = -1;
+        return;
+    endif;
+
+    //set the process count to 1
+    [SEMAPHORE_TABLE + counter * 4 + 1] = 1;
+    [SEMAPHORE_TABLE + counter * 4] = currentPID;             //this is the locking pid
+    R0 = counter;
+
+    return;
+endif;  
+
+//release the semaphore
+if (functionNum == 7) then
+    
+    //print("rel_sem");
+    //these are from the arguments
+    alias semID R2;
+    alias currentPID R3;
+
+    // If semaphore is locked by the current process
+    if ([SEMAPHORE_TABLE + semID * 4 + 0 ] == currentPID) then
+        [SEMAPHORE_TABLE + semID * 4 + 0] = -1;      //set the locking pid to -1
+        alias counter R4;
+        counter = 0;
+        while (counter < 16) do
+            if ([PROCESS_TABLE + counter * 16 + 4] == WAIT_SEMAPHORE && [PROCESS_TABLE + counter * 16 + 5] == semID) then
+                [PROCESS_TABLE + counter * 16 + 4] = READY;
+            endif;
+            counter = counter + 1;
+        endwhile;
+    endif; 
+
+    //decrement the process count
+    [SEMAPHORE_TABLE + semID * 4 + 1] = [SEMAPHORE_TABLE + semID * 4 + 1] -1;
+
+    return;
+endif;
+
+return;

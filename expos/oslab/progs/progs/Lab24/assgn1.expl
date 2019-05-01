@@ -1,0 +1,26 @@
+decl
+    int filedes, temp;
+    string filename, data;
+enddecl
+
+int main() {
+begin
+
+    write("Enter file");
+    read(filename);
+    filedes = exposcall("Open", filename);
+    temp = exposcall("Read", filedes, data);
+    if(temp == -1) then
+        write("No open file");
+    else 
+        write("File content : ");
+        write("-----------------");
+        while(temp == 0) do
+            write(data);
+            temp = exposcall("Read", filedes, data);
+        endwhile;
+        write("-----------------");
+    endif;
+    return 0;
+end
+}

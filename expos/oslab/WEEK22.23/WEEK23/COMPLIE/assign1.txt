@@ -1,0 +1,38 @@
+fdisk
+load --exec $HOME/myexpos/WEEK23/ASSIGN/assign1.xsm
+load --exec $HOME/myexpos/WEEK23/even.xsm
+load --exec $HOME/myexpos/WEEK23/odd.xsm
+
+load --init $HOME/myexpos/WEEK23/ASSIGN/shell.xsm 
+load --library $HOME/myexpos/expl/library.lib 
+load --idle $HOME/myexpos/WEEK23/idle.xsm 
+load --int=10 $HOME/myexpos/WEEK23/haltprog.xsm 
+load --exhandler $HOME/myexpos/WEEK23/Exhandler.xsm 
+
+load --int=7 $HOME/myexpos/WEEK23/sample_int7.xsm 
+load --int=timer $HOME/myexpos/WEEK23/ex23_timer.xsm
+load --int=console $HOME/myexpos/WEEK23/console_inter.xsm
+load --int=disk $HOME/myexpos/WEEK23/disk_inter.xsm
+
+load --int=4 $HOME/myexpos/WEEK23/int_4.xsm
+load --int=6 $HOME/myexpos/WEEK23/int_6.xsm
+load --int=8 $HOME/myexpos/WEEK23/int_8.xsm
+load --int=10 $HOME/myexpos/WEEK23/int_10.xsm
+
+load --int=11 $HOME/myexpos/WEEK23/int_11.xsm
+
+load --int=13 $HOME/myexpos/WEEK23/int_13.xsm
+load --int=14 $HOME/myexpos/WEEK23/int_14.xsm
+
+load --int=15 $HOME/myexpos/WEEK23/int_15.xsm
+
+load --int=9 $HOME/myexpos/WEEK23/int_9.xsm
+load --module 1 $HOME/myexpos/WEEK23/module_1.xsm
+
+load --module 2 $HOME/myexpos/WEEK23/module_2.xsm
+
+load --module 7 $HOME/myexpos/WEEK23/module_7.xsm
+load --module 5 $HOME/myexpos/WEEK23/module_5.xsm
+load --module 4 $HOME/myexpos/WEEK23/module_4.xsm
+load --module 0 $HOME/myexpos/WEEK23/module_0.xsm
+load --os $HOME/myexpos/WEEK23/ex23_os.xsm

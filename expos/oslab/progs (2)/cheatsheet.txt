@@ -1,0 +1,166 @@
+##PROCESS TABLE
+Number of Entries for each process = 16 for each process
+0:TICK
+1:PID
+2:PPID
+3:USER ID
+4:STATE
+5:STATE
+6:SWAP FLAG
+7:INODE INDEX
+8:INPUT BUFFER
+9:MODE FLAG
+10:USER AREA SWAP STATUS
+11:USER AREA PAGE NUMBER 
+12:KERNEL STACK POINTER(KPTR)
+13:USER STACK POINTER(UPTR OR SP)
+14:PTBR
+15:PTLR
+
+ACCESS : PROCESS_TABLE + PID*16
+
+##PAGE TABLE
+10 Entries for 1 process
+Each Entry is of 2 words = 20 Words total
+word1 : Physical Page Number
+word2 : Auxiliary Information
+Auxiliary info: RVWD = Referenced, Valid, Write, Dirty
+Access: PAGE_TABLE_BASE + PID*20
+
+## Address Translation 
+Physical address = [PTBR + 2 * (LogicalAdress/512)] + (LogicalAdress%512)
+
+## SYSTEM_STATUS_TABLE
+pid = [SYSTEM_STATUS_TABLE + 1]
+WAIT_MEM_COUNT = [SYSTEM_STATUS_TABLE + 3]
+MEM_FREE_COUNT = [SYSTEM_STATUS_TABLE + 2]
+
+
+## PAGE TABLE Structure
+//Library
+[PTBR+0] = 63;
+[PTBR+1] = "0100";
+[PTBR+2] = 64;
+[PTBR+3] = "0100";
+
+//Heap
+[PTBR+4] = 78;
+[PTBR+5] = "0110";
+[PTBR+6] = 79;
+[PTBR+7] = "0110";
+
+//Code
+[PTBR+8] = 65;
+[PTBR+9] = "0100";
+[PTBR+10] = 66;
+[PTBR+11] = "0100";
+[PTBR+12] = -1;
+[PTBR+13] = "0000";
+[PTBR+14] = -1;
+[PTBR+15] = "0000";
+
+//Stack
+[PTBR+16] = 76;
+[PTBR+17] = "0110";
+[PTBR+18] = 77;
+[PTBR+19] = "0110";
+
+##load from disk block to memory
+loadi(memoryPageNumber, diskBlockNumber)
+
+
+## SYSTEM CALLS
+SystemCall     : System Call Number, InterruptRoutingNumber
+Write          :5, int7  
+Create         :1, int4
+Delete         :4, int4
+Read(input)    :7, int6  console input and read file
+Fork           :8, int8
+Exec           :9, int9
+Exit           :10, int10
+GetPid
+semget         :17, int13
+semrelease     :18, int13
+open           :2,  int5
+close          :3,  int5
+
+## Modules
+Module           : Number
+Resource Manager : module 0
+Process Manager  : module 1
+Memory Manager   : module 2
+file manager     : module 3
+Device Manager   : module 4 
+scheduler module : modele 5
+boot module      : module 7
+
+
+#Semaphore
+Each semaphore table entry is of size 4 words of which the last two are unused.
+LOCKINGPID	|  PROCESS COUNT	|  Unused
+SEMAPHORE_TABLE + semID * 4
+
+#Perprocess Resource Table
+8 entries each of two word
+Resource Identifier        | Index of Open File Table/Semaphore Table Entry
+A free entry is denoted by -1 in the Resource Identifier field
+
+
+
+##SYESTEM CAll Routine
+Return Value <---SP        |IP +2 <---SP
+Argument3                  |Return Value
+Argument2                  |Argument3
+Argument1                  |Argument2 
+SystemCallNumber           |Argument1
+                           |SystemCallNumber 
+---------------------------|---------------------
+Before INT                 |After INT
+
+
+
+#Terminal Status Table
+4 words
+0/1 = free/busy | PID | Unused | Unused
+
+
+#Module Calling Convention
+R1: function number
+R2, R3: arguments
+
+#Resource Manager Module(0)
+Function Number	 Function Name	       Arguments	                     Return Value
+1	             Acquire Buffer	       Buffer Number, PID	            NIL
+2	             Release Buffer	       Buffer Number, PID	            0 or -1
+3	             Acquire Disk*	       PID                             	NIL
+4	             Acquire Inode	       Inodeindex, PID	                0 or -1
+5	             Release Inode	I      nodeindex, PID	                0 or -1
+6	             Acquire Semaphore	   PID	                            Semaphore Table Index or -1
+7	             Release Semaphore	   Semaphore Table Index, PID	    0 or -1
+8	             Acquire Terminal	   PID	                            NIL
+9	             Release Terminal	   PID	                             0 or -1
+
+
+#Device Manager Module(4)
+Function        : Function Number
+Disk Store      : 1
+Disk Load       : 2
+Terminal Write  : 3
+Terminal Read   : 4
+
+
+## Memory Manager Module
+
+Function Number	Function Name	Arguments	              Return Value
+1	            Get Free Page	NIL	                      Free Page number
+2	            Release Page	Page Number	              NIL
+3	            Get Free Block	NIL	                      Free Block Number or -1
+4	            Release Block	Block Number, PID	      NIL
+5	            Get Code Page	Block Number	          Page Number
+6	            Get Swap Block	NIL	                      Block Number
+
+
+
+
+
+

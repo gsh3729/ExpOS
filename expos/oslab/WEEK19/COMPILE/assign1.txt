@@ -1,0 +1,20 @@
+fdisk
+load --exec $HOME/myexpos/WEEK19/ASSIGN/a1.xsm
+load --init $HOME/myexpos/WEEK19/input.xsm 
+load --library $HOME/myexpos/expl/library.lib 
+load --idle $HOME/myexpos/WEEK19/idle.xsm 
+load --int=10 $HOME/myexpos/WEEK19/haltprog.xsm 
+load --exhandler $HOME/myexpos/WEEK19/Exhandler.xsm 
+load --int=7 $HOME/myexpos/WEEK19/sample_int7.xsm 
+load --int=timer $HOME/myexpos/WEEK19/ex19_timer.xsm
+load --int=console $HOME/myexpos/WEEK19/console_inter.xsm
+load --int=disk $HOME/myexpos/WEEK19/disk_inter.xsm
+load --int=6 $HOME/myexpos/WEEK19/int_6.xsm
+load --int=9 $HOME/myexpos/WEEK19/int_9.xsm
+load --module 1 $HOME/myexpos/WEEK19/module_1.xsm
+load --module 2 $HOME/myexpos/WEEK19/module_2.xsm
+load --module 7 $HOME/myexpos/WEEK19/module_7.xsm
+load --module 5 $HOME/myexpos/WEEK19/module_5.xsm
+load --module 4 $HOME/myexpos/WEEK19/module_4.xsm
+load --module 0 $HOME/myexpos/WEEK19/module_0.xsm
+load --os $HOME/myexpos/WEEK19/ex19_os.xsm

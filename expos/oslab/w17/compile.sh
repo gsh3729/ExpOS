@@ -1,0 +1,13 @@
+./spl /home/111601005/lab/expos/oslab/w17/timer_interrupt.spl
+./spl /home/111601005/lab/expos/oslab/w17/read_interrupt_int6.spl
+./spl /home/111601005/lab/expos/oslab/w17/write_interrupt_int7.spl
+./spl /home/111601005/lab/expos/oslab/w17/device_manager_module4.spl
+./spl /home/111601005/lab/expos/oslab/w17/resource_manager_module0.spl
+./spl /home/111601005/lab/expos/oslab/w17/boot_module.spl
+./spl /home/111601005/lab/expos/oslab/w17/scheduler_module5.spl
+./spl /home/111601005/lab/expos/oslab/w17/os_startup.spl
+./spl /home/111601005/lab/expos/oslab/w17/int10_module.spl
+./spl /home/111601005/lab/expos/oslab/w17/console_interrupt_handler.spl
+./spl /home/111601005/lab/expos/oslab/w17/process_manager_module1.spl
+./spl /home/111601005/lab/expos/oslab/w17/memory_manager_module2.spl
+./spl /home/111601005/lab/expos/oslab/w17/exec_interrupt9.spl

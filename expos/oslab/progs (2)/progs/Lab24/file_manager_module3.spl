@@ -1,0 +1,198 @@
+//=================== MODULE 3 ====================
+//print "File manager";
+alias functionNum R1;
+
+// Buffer read
+if(functionNum == 2) then
+
+    alias disk_block_num R2;
+    alias offset R3;
+    alias buffer_addr R4;
+
+    alias buffer_num R5;
+    buffer_num = (disk_block_num % 4);
+
+    // Acquire the buffer by calling the Acquire_Buffer() function in the Resource Manager module
+    multipush(R2, R3, R4, R5);
+    R1 = 1;
+    R2 = buffer_num;
+    R3 = [SYSTEM_STATUS_TABLE + 1];
+    call MOD_0;
+    multipop(R2, R3, R4, R5);
+    
+    //  if the buffer contains a different disk block
+    if([BUFFER_TABLE + buffer_num*4] != disk_block_num) then
+        // if buffer contents are dirty
+
+        if([BUFFER_TABLE + buffer_num*4 + 1] == 1) then
+            // call disk store in Device Manager
+            multipush(R2, R3, R4, R5);
+            R1 = 1;
+            R2 = [SYSTEM_STATUS_TABLE + 1];
+            R3 = 71 + buffer_num;                  // page number
+            R4 = [BUFFER_TABLE + buffer_num*4];        // disk block number
+            call MOD_4;
+            multipop(R2, R3, R4, R5);
+
+            // mark the buffer as clean
+            [BUFFER_TABLE + buffer_num*4 + 1] = 0;
+        endif;
+
+        // call disk load in Device manager
+        multipush(R2, R3, R4, R5);
+        R1 = 2;
+        R4 = disk_block_num;
+        R2 = [SYSTEM_STATUS_TABLE + 1];
+        R3 = (71 + buffer_num);
+        call MOD_4;
+        multipop(R2, R3, R4, R5);
+
+        // Set the new Disk block number in the Buffer table entry
+        [BUFFER_TABLE + 4*buffer_num] = disk_block_num;
+    endif;
+
+    // Copy the contents in the offset location in the buffer to the physical address given as input
+    [buffer_addr] = [((71+buffer_num) * 512) + offset];
+
+    // call release_buffer() in Resource manager
+    R1 = 2;
+    R2 = buffer_num;
+    R3 = [SYSTEM_STATUS_TABLE + 1];
+    call MOD_0;
+
+// Open function
+else if(functionNum == 3) then
+
+	alias file_name R2;
+	alias i R6;
+    alias inode_index R7;
+
+    // checking if the file exists or not & file is not exec
+    i = 0;
+    while(i < MAX_FILE_NUM) do
+        if([(INODE_TABLE + 16*i) + 1] == file_name) then
+            inode_index = i;
+            break;
+        endif;
+        i = i+1;
+    endwhile;
+    
+    //  If the entry is not found, return -1
+    if(i == MAX_FILE_NUM) then
+        R0 = -1;
+        return;
+    endif;
+
+    // call acquire inode
+    multipush(R2, R7);
+    R1 = 4;
+    R2 = [SYSTEM_STATUS_TABLE + 1];
+    R3 = inode_index;
+    call MOD_0;
+    multipop(R2, R7);
+
+    // If the locking fails, return -1. 
+    if(R0 == -1) then   
+        return;
+    endif;
+
+    // If file name in the inode table entry does not match the input file name or if it is of type EXEC, release_inode() and return -1
+    if((file_name != [INODE_TABLE + 16*inode_index + 1]) || ([INODE_TABLE + 16*i] == EXEC)) then
+        // call release inode
+        R1 = 5;
+        R2 = [SYSTEM_STATUS_TABLE + 1];
+        R3 = inode_index;
+        call MOD_0;
+        R0 = -1;
+        return;
+    endif;
+
+    alias open_file_free_entry R8;
+    i = 0;
+    open_file_free_entry = -1;
+    while(i < 32) do 
+        if([OPEN_FILE_TABLE + 4*i] == -1) then
+            open_file_free_entry = i;
+            break;
+        endif;
+        i = i + 1;
+    endwhile;
+
+    // if there is no free entry, we have reached maximum number of open files in the system
+    if(open_file_free_entry == -1) then
+        // release inode
+        R1 = 5;
+        R2 = [SYSTEM_STATUS_TABLE + 1];
+        R3 = inode_index;
+        call MOD_0;
+        R0 = -2;
+        return;
+    endif;
+
+    if(file_name == "root") then
+        [OPEN_FILE_TABLE + 4*open_file_free_entry] = INODE_ROOT;
+    else 
+        alias temp R1;
+        temp = FILE_STATUS_TABLE + 4*inode_index + 1;
+        if([temp] == -1) then
+            [temp] = 1;
+        else 
+            [temp] = [temp] + 1;
+        endif;
+        [OPEN_FILE_TABLE + 4*open_file_free_entry] = inode_index;
+    endif;
+
+    [OPEN_FILE_TABLE + 4*open_file_free_entry + 1] = 1;
+    [OPEN_FILE_TABLE + 4*open_file_free_entry + 2] = 0;
+
+    // call the release_inode function in the Resource Manager module
+    multipush(R8);
+    R1 = 5;
+    R2 = [SYSTEM_STATUS_TABLE + 1];
+    R3 = inode_index;
+    call MOD_0;
+    multipop(R8);
+
+    // return open file free entry
+    R0 = open_file_free_entry;
+	
+// close function
+else if(functionNum == 4) then
+
+    alias open_file_index R1;
+    alias inode_index R6;
+    alias open_instance_count R7;
+    alias open_file_entry R8;
+    alias file_open_count R9;
+
+    // Find the index of the Inode Table entry of the file from the Open File Table
+    open_file_entry = OPEN_FILE_TABLE + 4*open_file_index;
+    inode_index = [open_file_entry];
+    file_open_count = FILE_STATUS_TABLE + 4*inode_index + 1;
+
+    // In the Open File Table Entry, decrement the Open Instance Count
+    open_instance_count = OPEN_FILE_TABLE + 4*open_file_index + 1;
+    [open_instance_count] = [open_instance_count]-1;
+
+    // If the Open Instance Count becomes 0
+    if([open_instance_count] == 0) then
+        // 	If the file is not the "root", decrement the File Open Count in the File (Inode) Status Table
+        if([open_file_entry] != INODE_ROOT) then
+            [file_open_count] = [file_open_count]-1; 
+        endif;
+
+        // 	Invalidate the entry by setting all fields to -1
+        [open_file_entry] = -1;
+        [open_instance_count] = -1;
+        [open_file_entry + 2] = -1;
+
+        if([file_open_count] == 0) then
+            [file_open_count] = -1;
+        endif;
+    endif;
+
+endif;
+endif;
+endif;
+
+return;

@@ -1,0 +1,121 @@
+//This is the interrupt to implement the open and close system calls 
+alias systemNum R8;
+alias userSP R9;
+
+//userSP-5 is the position that stores the system call number
+userSP = SP;
+systemNum = [([PTBR + 2 * ((userSP - 5) / 512) ] * 512 )  + ((userSP - 5) % 512)];
+
+//this is to switch to the kernel stack
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 13)] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 11)] * 512 - 1;
+
+//change the mode flag of the process
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = systemNum;
+
+alias retVal R6;
+alias i R10;
+alias free_resource_table_entry R13;
+alias currentPID R11;
+alias user_area_page_num R12;
+currentPID = [SYSTEM_STATUS_TABLE + 1];
+user_area_page_num = [PROCESS_TABLE + (16*currentPID) + 11];
+
+alias resource_entry R15;
+resource_entry = (user_area_page_num * 512) + RESOURCE_TABLE_OFFSET;
+
+retVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+
+//system call number for open is 2
+if(systemNum == 2) then
+
+    //Get the argument (name of the file) from user stack
+    alias file_name R7;
+    file_name = [[PTBR + 2 * ((userSP - 4)/512)]*512 + (userSP - 4) % 512];
+
+    // Find a free Per-Process Resource Table entry
+    free_resource_table_entry = -1;
+    i = 0;
+    alias counter R1;
+    counter = 0;
+    while(counter < 8) do
+        if([resource_entry + i] == -1) then
+            free_resource_table_entry = counter;
+            break;
+        endif;
+        i = i + 2;
+        counter = counter + 1;
+    endwhile;
+
+    // If there is no free entry, return -3
+    if(free_resource_table_entry == -1) then
+        [retVal] = -3;
+        [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+        SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+        ireturn;
+    endif;
+
+    // calling open  
+    alias open_file_table_entry R14;
+    multipush(R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+    R1 = 3;
+    R2 = file_name;
+    call MOD_3;
+    multipop (R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+    open_file_table_entry = R0;
+
+    // If Open fails, return the error code
+    if((open_file_table_entry == -1) || (open_file_table_entry == -2)) then
+        [retVal] = -2;
+        [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+        SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+        ireturn;
+    endif;
+
+    // Set the Per-Process Resource Table entry  
+    [resource_entry + 2*free_resource_table_entry] = FILE;
+    [resource_entry + 2*free_resource_table_entry + 1] = open_file_table_entry;
+
+    [retVal] = free_resource_table_entry;
+
+endif;
+
+//system call number for close is 2
+if(systemNum == 3) then
+
+    print("close");
+    alias file_descriptor R7;
+    file_descriptor = [[PTBR + 2 * ((userSP - 4)/512)]*512 + (userSP - 4) % 512];
+
+    if((file_descriptor < 0) || (file_descriptor > 7)) then
+        retVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+        [retVal] = -1;
+        [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+        SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+        ireturn;
+    endif;
+
+    // If no file is open with given file descriptor
+    if([resource_entry + (2*file_descriptor)] != FILE) then
+        [retVal] = -1;
+        [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+        SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+        ireturn;
+    endif;
+
+    // calling close  
+    multipush(R6, R7, R8, R9, R11, R12, R13, R15);
+    R1 = 4;
+    R2 = [resource_entry + (2*file_descriptor) + 1];        // file table index
+    call MOD_3;
+    multipop(R6, R7, R8, R9, R11, R12, R13, R15);
+
+    [resource_entry + (file_descriptor*2)] = -1;
+    [resource_entry + (file_descriptor*2) + 1] = -1;
+
+    [retVal] = 0;
+endif;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+ireturn;

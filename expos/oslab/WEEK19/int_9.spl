@@ -1,0 +1,139 @@
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13] = SP;
+//breakpoint;
+
+alias userSP R13;
+userSP = SP;
+
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 - 1;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9]=9;
+
+alias physicalPageNum R3;
+alias offset R1;
+alias fileDescriptor R2;
+alias retval R0;
+retval = [PTBR + 2*((userSP-1)/512)]*512+((userSP-1)%512);
+physicalPageNum = [PTBR + 2*((userSP-4)/512)]; 
+offset = ((userSP-4)%512);
+fileDescriptor = (physicalPageNum * 512) + offset;
+
+alias search R4;
+alias b R5;
+search = 0;
+b = 0;
+//print("hello");
+while(search<MAX_FILE_NUM) do
+     if([INODE_TABLE + search*16 + 1]!=[fileDescriptor]) then
+        b = b + 1;
+        search = search + 1;
+        continue;
+     else
+        if([INODE_TABLE + search*16]!=3) then
+            b = b + 1;
+            search = search + 1;
+            continue;
+        else
+          alias inodeindex R6;
+          inodeindex = search;
+          multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+          R1=3;
+          R2=[SYSTEM_STATUS_TABLE+1];
+          call MOD_1;
+          multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R13);
+          alias userarea R7;
+          userarea = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11];
+          [MEMORY_FREE_LIST + userarea] = [MEMORY_FREE_LIST + userarea] +1;
+          [SYSTEM_STATUS_TABLE+2] = [SYSTEM_STATUS_TABLE+2] - 1;
+          SP = userarea * 512 - 1;
+          [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 4] = RUNNING;
+          [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 7] = inodeindex;
+         
+          PTBR = PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1]*20;
+          PTLR = 10;
+          [PTBR + 0]=63;
+          [PTBR + 1]="0100";
+          [PTBR + 2]=64;
+          [PTBR + 3]="0100";
+         
+          //heap-initiliaize
+          [PTBR + 4]=-1;
+          [PTBR + 5]="0000";
+
+          [PTBR + 6]=-1;
+          [PTBR + 7]="0000";
+
+          //stack-initialize
+          multipush(R1,R2,R3,R4,R5,R6,R7);
+          R1 = 1;
+          call MOD_2;
+          [PTBR + 16]=R0;
+          [PTBR + 17]="0110";
+          multipop(R1,R2,R3,R4,R5,R6,R7);
+         
+          multipush(R1,R2,R3,R4,R5,R6,R7);
+          R1 = 1;
+          call MOD_2;
+          [PTBR + 18]=R0;
+          [PTBR + 19]="0110";
+          //print([PTBR+19][0]);
+          multipop(R1,R2,R3,R4,R5,R6,R7);
+
+alias block R10;
+alias temp R11;
+block = 0;
+temp = 0;
+         while(block<4) do
+          //print(block);
+          if(block==0) then
+          multipush(R1,R2,R3,R4,R5,R6,R7,R10,R11);
+          R1=5;
+          R2=[INODE_TABLE + inodeindex*16 + 8 + block];
+          call MOD_2;
+          [PTBR + 8+temp]= R0;
+          [PTBR + 9+temp]="0100";
+          multipop(R1,R2,R3,R4,R5,R6,R7,R10,R11);
+          temp=temp+2;
+          else
+          [PTBR + 8+temp]=-1;
+          [PTBR + 9+temp]="0000";
+          temp = temp + 2;
+          endif;
+          block = block+1;
+        endwhile;
+[[PTBR+16]*512] = [[PTBR+8]*512+1]; //entry point to top of stack
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16+4]=RUNNING;
+multipush(R5,R6);
+R5 = ([PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512)+512;
+R6 = 0;
+while (R6 <17)do
+  R6 = R6 +2;
+  [R5-R6]=-1;
+endwhile;
+multipop(R5,R6);
+
+multipush(R5,R6);
+R5=DISK_MAP_TABLE +[SYSTEM_STATUS_TABLE+1]*10;
+[R5]=-1;
+[R5+1]=-1;
+[R5+2]=-1;
+[R5+3]=-1;
+[R5+4]=[INODE_TABLE + inodeindex*16 + 8];
+[R5+5]=[INODE_TABLE + inodeindex*16 + 9];
+[R5+6]=[INODE_TABLE + inodeindex*16 + 10];
+[R5+7]=[INODE_TABLE + inodeindex*16 + 11];
+[R5+8]=-1;
+[R5+9]=-1;
+multipop(R5,R6);
+SP=8*512;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9]=0;
+ireturn;           
+     endif;
+  endif;
+endwhile;            
+if(b!=0) then
+ SP=[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13];
+ [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9]=0;
+ [retval]=-1;
+ ireturn;
+endif;
+

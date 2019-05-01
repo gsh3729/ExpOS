@@ -1,0 +1,36 @@
+fdisk
+load --exec $HOME/myexpos/WEEK22/ASSIGN/ASSIGN2/parent.xsm
+load --exec $HOME/myexpos/WEEK22/ASSIGN/ASSIGN2/child.xsm
+
+
+load --init $HOME/myexpos/WEEK22/ASSIGN/shell.xsm 
+load --library $HOME/myexpos/expl/library.lib 
+load --idle $HOME/myexpos/WEEK22/idle.xsm 
+load --int=10 $HOME/myexpos/WEEK22/haltprog.xsm 
+load --exhandler $HOME/myexpos/WEEK22/Exhandler.xsm 
+
+load --int=7 $HOME/myexpos/WEEK22/sample_int7.xsm 
+load --int=timer $HOME/myexpos/WEEK22/ex22_timer.xsm
+load --int=console $HOME/myexpos/WEEK22/console_inter.xsm
+load --int=disk $HOME/myexpos/WEEK22/disk_inter.xsm
+load --int=6 $HOME/myexpos/WEEK22/int_6.xsm
+load --int=8 $HOME/myexpos/WEEK22/int_8.xsm
+load --int=10 $HOME/myexpos/WEEK22/int_10.xsm
+
+load --int=11 $HOME/myexpos/WEEK22/int_11.xsm
+
+load --int=13 $HOME/myexpos/WEEK22/int_13.xsm
+load --int=14 $HOME/myexpos/WEEK22/int_14.xsm
+
+load --int=15 $HOME/myexpos/WEEK22/int_15.xsm
+
+load --int=9 $HOME/myexpos/WEEK22/int_9.xsm
+load --module 1 $HOME/myexpos/WEEK22/module_1.xsm
+
+load --module 2 $HOME/myexpos/WEEK22/module_2.xsm
+
+load --module 7 $HOME/myexpos/WEEK22/module_7.xsm
+load --module 5 $HOME/myexpos/WEEK22/module_5.xsm
+load --module 4 $HOME/myexpos/WEEK22/module_4.xsm
+load --module 0 $HOME/myexpos/WEEK22/module_0.xsm
+load --os $HOME/myexpos/WEEK22/ex22_os.xsm

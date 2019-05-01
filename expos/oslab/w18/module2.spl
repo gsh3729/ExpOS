@@ -1,0 +1,63 @@
+alias functionNum R1;
+
+print "mod2";
+// Get Free Page()///////////////////////////////////////////////////	
+if(functionNum == 1) then
+
+	[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1; // Increment WAIT_MEM_COUNT
+
+	// while memory is full
+	while([SYSTEM_STATUS_TABLE + 2] == 0) do
+		// this process will be blocked
+		[(PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1]) + 4] = WAIT_MEM;
+
+		// Schedule other process by invoking the context switch module
+		multipush(R1);
+		call MOD_5;
+		multipop(R1);
+
+	endwhile;
+
+	[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] - 1; // Decrement WAIT_MEM_COUNT
+	[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1; // Decrement MEM_FREE_COUNT
+
+	// Finding a free page 
+	alias i R2;
+	i = 83;
+	while(i < 128) do
+		if([MEMORY_FREE_LIST + i] == 0) then
+			[MEMORY_FREE_LIST + i] = 1;
+			break;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	// store return value in R0
+	alias retVal R0;
+	retVal = i;
+/////////////////////////////////////////////////////////////////////////////////
+
+// Release Page(page num)////////////////////////////////////////////////
+else if(functionNum == 2) then
+
+	alias page_number R2;
+	[MEMORY_FREE_LIST + page_number] = [MEMORY_FREE_LIST + page_number] - 1;  // Decrement memory free list
+
+	if([MEMORY_FREE_LIST + page_number] == 0) then
+		[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1;  // increment FREE_MEM_COUNT
+	endif;
+
+	// Update the STATUS to READY which are WAIT_MEM
+	alias i R3;
+	i = 0;
+	while(i < MAX_PROC_NUM) do
+		if([(PROCESS_TABLE + 16*i) + 4] == WAIT_MEM) then
+			[(PROCESS_TABLE + 16*i) + 4] = READY;
+		endif;
+		i = i + 1;
+	endwhile;
+/////////////////////////////////////////////////////////////////////////
+endif;
+endif;
+
+return;

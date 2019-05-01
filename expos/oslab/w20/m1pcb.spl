@@ -1,0 +1,22 @@
+//get pcb entry(NIL)==>index of pcb entry
+if (functionNum == 1) then
+	alias counter R3;
+	counter = 1;
+	while(counter <= 15) then
+		if([PROCESS_TABLE + (counter*16) + 4]==TERMINATED]) then
+			break;
+		endif;
+		counter = counter + 1;
+	endwhile;
+
+	if(counter > 15) then
+		R0 = -1;
+		return;
+	endif;
+
+	[PROCESS_TABLE + counter*16 + 1] = counter;
+	[PROCESS_TABLE + counter*16 + 4] = ALLOCATED;
+	[PROCESS_TABLE + counter*16 + 14] = PAGE_TABLE_BASE + counter*20;
+	[PROCESS_TABLE + counter*16 + 15] = 10;
+	R0=counter;
+	
