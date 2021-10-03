@@ -1,5 +1,0 @@
-Links:
-Disk Organisation/Memory: http://exposnitc.github.io/os_implementation.html
-
-Process/Page Table: http://exposnitc.github.io/os_design-files/process_table.html#per_page_table
-
